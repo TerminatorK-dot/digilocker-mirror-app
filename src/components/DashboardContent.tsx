@@ -1,8 +1,81 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Eye } from "lucide-react";
+import { ExternalLink, Eye, Download } from "lucide-react";
+import { useState } from "react";
 
 export function DashboardContent() {
+  const [viewingDocument, setViewingDocument] = useState<string | null>(null);
+
+  const handleViewDocument = (docId: string) => {
+    if (["apaar", "aadhaar", "class10", "class12"].includes(docId)) {
+      setViewingDocument(docId);
+    }
+  };
+
+  const handleDownloadPDF = (docId: string) => {
+    if (["apaar", "aadhaar", "class10", "class12"].includes(docId)) {
+      // Create a blob with placeholder PDF content
+      const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 44
+>>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(${docId.toUpperCase()} Document) Tj
+ET
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f 
+0000000010 00000 n 
+0000000060 00000 n 
+0000000120 00000 n 
+0000000220 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+320
+%%EOF`;
+      
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${docId}_document.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
   const issuedDocuments = [
     {
       id: "apaar",
@@ -94,9 +167,28 @@ export function DashboardContent() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="text-2xl">{doc.icon}</div>
-                  <Button variant="ghost" size="icon" className="w-6 h-6">
-                    <Eye className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    {["apaar", "aadhaar", "class10", "class12"].includes(doc.id) && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="w-6 h-6"
+                        onClick={() => handleDownloadPDF(doc.id)}
+                        title="Download PDF"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="w-6 h-6"
+                      onClick={() => handleViewDocument(doc.id)}
+                      title="View Document"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
                 <h3 className="font-medium text-government-navy mb-1">{doc.name}</h3>
                 {doc.number && (
@@ -158,6 +250,58 @@ export function DashboardContent() {
           ))}
         </div>
       </section>
+
+      {/* Document Viewer Modal */}
+      {viewingDocument && ["apaar", "aadhaar", "class10", "class12"].includes(viewingDocument) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">
+                  {issuedDocuments.find(d => d.id === viewingDocument)?.name}
+                </h3>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setViewingDocument(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </Button>
+              </div>
+              
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div className="text-6xl mb-4">
+                  {issuedDocuments.find(d => d.id === viewingDocument)?.icon}
+                </div>
+                <h4 className="text-xl font-semibold mb-2">
+                  {issuedDocuments.find(d => d.id === viewingDocument)?.name}
+                </h4>
+                <p className="text-gray-600 mb-4">
+                  Interactive document view for {viewingDocument.toUpperCase()}
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  This is a placeholder for the actual document content with photos and details.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button 
+                    onClick={() => handleDownloadPDF(viewingDocument)}
+                    className="bg-government-blue hover:bg-government-blue/90"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setViewingDocument(null)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
