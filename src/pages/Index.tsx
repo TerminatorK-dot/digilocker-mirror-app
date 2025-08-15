@@ -1,17 +1,22 @@
-import { Header } from "@/components/Header";
-import { Navigation } from "@/components/Navigation";
-import { HeroSection } from "@/components/HeroSection";
-import { Footer } from "@/components/Footer";
-import { ChatBot } from "@/components/ChatBot";
+import { useState } from "react";
+import { Sidebar } from "@/components/Sidebar";
+import { DashboardHeader } from "@/components/DashboardHeader";
+import { DashboardContent } from "@/components/DashboardContent";
 
 const Index = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <Navigation />
-      <HeroSection />
-      <Footer />
-      <ChatBot />
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
+      
+      <div className="flex-1 flex flex-col min-w-0">
+        <DashboardHeader onMenuClick={() => setIsSidebarOpen(true)} />
+        <DashboardContent />
+      </div>
     </div>
   );
 };
